@@ -12,7 +12,14 @@
 import rti.connextdds as dds
 import time
 import argparse
+import threading
 
+def run(sample, writer, count):
+    sample["x"] = count
+    writer.write(sample)
+
+    count += 1
+    #time.sleep(1)
 
 def publisher_main(domain_id, sample_count):
     participant = dds.DomainParticipant(domain_id)
@@ -24,13 +31,11 @@ def publisher_main(domain_id, sample_count):
     sample = dds.DynamicData(wssc_type)
 
     count = 0
-    while (sample_count == 0) or (count < sample_count):
-        print("Writing Foo, count = {}".format(count))
-        sample["x"] = count
-        writer.write(sample)
-
-        count += 1
-        time.sleep(1)
+    for i in range(100000):
+        thread = threading.Thread(target=run, args=(sample,writer,count))
+        thread.start()
+        thread.join()
+        print("iteration" + str(i+1))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
